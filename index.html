@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Матрица компетенций</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/17.0.2/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/17.0.2/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/6.26.0/babel.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #FFFFF0;
+        }
+        .positions {
+            color: #DEB887;
+            text-align: left;
+            margin-bottom: 20px;
+            font-weight: normal;
+        }
+        .matrix-container {
+            display: flex;
+            flex-direction: column;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .matrix {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 2mm;
+            flex-grow: 1;
+        }
+        .group {
+            display: flex;
+            flex-direction: column;
+            gap: 2mm;
+        }
+        .competencies {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2mm;
+        }
+        .group-title {
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            margin-bottom: 2mm;
+            transition: all 0.3s;
+            font-weight: normal;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+        }
+        .group-title:hover {
+            transform: scale(1.05);
+            z-index: 1;
+        }
+        .competency {
+            padding: 10px;
+            border-radius: 5px;
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+            height: 100px;
+            box-sizing: border-box;
+            font-size: 12px;
+        }
+        .competency:not(.future-competency):hover {
+            transform: scale(1.05);
+            z-index: 1;
+            filter: saturate(1.5);
+        }
+        .competency.highlighted {
+            color: white;
+        }
+        .competency h3 {
+            margin: 0 0 5px 0;
+            font-size: 14px;
+            display: flex;
+            align-items: flex-start;
+            font-weight: normal;
+        }
+        .competency p {
+            margin: 0;
+            flex-grow: 1;
+        }
+        .checkbox, .group-checkbox {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background-color: white;
+            margin-right: 10px;
+            cursor: pointer;
+            position: relative;
+        }
+        .checkbox:checked::after, .group-checkbox:checked::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 16px;
+            font-weight: bold;
+            animation: checkmark 0.3s ease-in-out;
+        }
+        @keyframes checkmark {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.5);
+            }
+            100% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+        .group:nth-child(1) .competency { background-color: rgba(147, 112, 219, 0.5); }
+        .group:nth-child(2) .competency { background-color: rgba(30, 144, 255, 0.5); }
+        .group:nth-child(3) .competency { background-color: rgba(32, 178, 170, 0.5); }
+        .group:nth-child(4) .competency { background-color: rgba(139, 0, 139, 0.5); }
+        .group:nth-child(1) .group-title { background: linear-gradient(to right, #9370DB, #B19CD9); }
+        .group:nth-child(2) .group-title { background: linear-gradient(to right, #1E90FF, #87CEFA); }
+        .group:nth-child(3) .group-title { background: linear-gradient(to right, #20B2AA, #7FFFD4); }
+        .group:nth-child(4) .group-title { background: linear-gradient(to right, #8B008B, #DA70D6); }
+        .group:nth-child(1) .checkbox:checked::after, .group:nth-child(1) .group-checkbox:checked::after { color: #9370DB; }
+        .group:nth-child(2) .checkbox:checked::after, .group:nth-child(2) .group-checkbox:checked::after { color: #1E90FF; }
+        .group:nth-child(3) .checkbox:checked::after, .group:nth-child(3) .group-checkbox:checked::after { color: #20B2AA; }
+        .group:nth-child(4) .checkbox:checked::after, .group:nth-child(4) .group-checkbox:checked::after { color: #8B008B; }
+        .group:nth-child(1) .competency.highlighted { background-color: #9370DB; }
+        .group:nth-child(2) .competency.highlighted { background-color: #1E90FF; }
+        .group:nth-child(3) .competency.highlighted { background-color: #20B2AA; }
+        .group:nth-child(4) .competency.highlighted { background-color: #8B008B; }
+        .future-competency {
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        .group:nth-child(1) .future-competency { background-color: rgba(147, 112, 219, 0.25); }
+        .group:nth-child(2) .future-competency { background-color: rgba(30, 144, 255, 0.25); }
+        .group:nth-child(3) .future-competency { background-color: rgba(32, 178, 170, 0.25); }
+        .group:nth-child(4) .future-competency { background-color: rgba(139, 0, 139, 0.25); }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const competencies = [
+            { id: 1, group: "БАЗОВЫЕ", name: "Осознанность и рефлексия" },
+            { id: 2, group: "БАЗОВЫЕ", name: "Критическое мышление и принятие решений" },
+            { id: 3, group: "БАЗОВЫЕ", name: "Системное мышление и решение проблем" },
+            { id: 4, group: "БАЗОВЫЕ", name: "Креативное и инновационное мышление" },
+            { id: 5, group: "БАЗОВЫЕ", name: "Умение учиться и обучаемость" },
+            { id: 6, group: "БАЗОВЫЕ", name: "Планирование, целеполагание и самомотивация" },
+            { id: 7, group: "БАЗОВЫЕ", name: "Коммуникация, активное слушание и обратная связь" },
+            { id: 8, group: "БАЗОВЫЕ", name: "Уверенное поведение, самопрезентация и ассертивность" },
+            { id: 9, group: "БАЗОВЫЕ", name: "Проведение презентаций и других публичных выступлений" },
+            { id: 10, group: "БАЗОВЫЕ", name: "Стратегии решения межличностных конфликтов" },
+            { id: 11, group: "БАЗОВЫЕ", name: "Проведение переговоров" },
+            { id: 12, group: "БАЗОВЫЕ", name: "Цифровая этика виртуального общения" },
+            { id: 13, group: "БАЗОВЫЕ", name: "Эмоциональный интеллект" },
+            { id: 14, group: "БАЗОВЫЕ", name: "Адаптивность, гибкость и устойчивость" },
+            { id: 15, group: "БАЗОВЫЕ", name: "Этика и ответственное поведение" },
+            { id: 16, group: "КОМАНДНЫЕ", name: "Принятие совместных решений в команде" },
+            { id: 17, group: "КОМАНДНЫЕ", name: "Ролевая и функциональная гибкость" },
+            { id: 18, group: "КОМАНДНЫЕ", name: "Взаимное обучение и поддержка внутри команды" },
+            { id: 19, group: "КОМАНДНЫЕ", name: "Сотрудничество и координация в команде" },
+            { id: 20, group: "КОМАНДНЫЕ", name: "Решение групповых конфликтов" },
+            { id: 21, group: "КОМАНДНЫЕ", name: "Коллективное лидерство" },
+            { id: 22, group: "КОМАНДНЫЕ", name: "Эмоциональная гибкость и саморегуляция в команде" },
+            { id: 23, group: "ЛИДЕРСКИЕ", name: "Лидерское влияние и авторитет" },
+            { id: 24, group: "ЛИДЕРСКИЕ", name: "Ситуационное руководство" },
+            { id: 25, group: "ЛИДЕРСКИЕ", name: "Принятие управленческих решений" },
+            { id: 26, group: "ЛИДЕРСКИЕ", name: "Обучение, развитие и фасилитация команды" },
+            { id: 27, group: "ЛИДЕРСКИЕ", name: "Управление мотивацией и приверженностью в команде" },
+            { id: 28, group: "ЛИДЕРСКИЕ", name: "Управление эмоциональным благополучием в команде" },
+            { id: 29, group: "ЛИДЕРСКИЕ", name: "Управление коммуникациями в команде" },
+            { id: 30, group: "ЛИДЕРСКИЕ", name: "Управление креативностью команды" },
+            { id: 31, group: "ОРГАНИЗАЦИОННЫЕ", name: "Проектное и дизайн мышление" },
+            { id: 32, group: "ОРГАНИЗАЦИОННЫЕ", name: "Стратегическое мышление и прогнозирование" },
+            { id: 33, group: "ОРГАНИЗАЦИОННЫЕ", name: "Долгосрочное планирование и делегирование" },
+            { id: 34, group: "ОРГАНИЗАЦИОННЫЕ", name: "Создание и управление корпоративной культурой" },
+        ];
+
+        function CompetencyMatrix() {
+            const [highlighted, setHighlighted] = React.useState({});
+
+            const toggleHighlight = (id) => {
+                setHighlighted(prev => ({...prev, [id]: !prev[id]}));
+            };
+
+            const toggleGroupHighlight = (group) => {
+                const groupCompetencies = competencies.filter(comp => comp.group === group);
+                const allHighlighted = groupCompetencies.every(comp => highlighted[comp.id]);
+                const newHighlighted = {...highlighted};
+                groupCompetencies.forEach(comp => {
+                    newHighlighted[comp.id] = !allHighlighted;
+                });
+                setHighlighted(newHighlighted);
+            };
+
+            const groupedCompetencies = competencies.reduce((acc, comp) => {
+                if (!acc[comp.group]) {
+                    acc[comp.group] = [];
+                }
+                acc[comp.group].push(comp);
+                return acc;
+            }, {});
+
+            const renderCompetencies = (comps, group) => {
+                const cells = comps.map(comp => (
+                    <div
+                        key={comp.id}
+                        className={`competency ${highlighted[comp.id] ? 'highlighted' : ''}`}
+                    >
+                        <h3>
+                            <input
+                                type="checkbox"
+                                className="checkbox"
+                                checked={highlighted[comp.id] || false}
+                                onChange={() => toggleHighlight(comp.id)}
+                            />
+                            {comp.id}
+                        </h3>
+                        <p>{comp.name}</p>
+                    </div>
+                ));
+
+                // Add future competency cells to fill the grid
+                const cellsToAdd = 16 - cells.length;
+                for (let i = 0; i < cellsToAdd; i++) {
+                    cells.push(
+                        <div key={`future-${group}-${i}`} className={`competency future-competency`}>
+                            <p>Компетенция будущего</p>
+                        </div>
+                    );
+                }
+
+                return cells;
+            };
+
+            return (
+                <div>
+                    <div className="positions">
+                        Менеджер по продажам | Руководитель отдела продаж | Директор по продажам
+                    </div>
+                    <div className="matrix-container">
+                        <div className="matrix">
+                            {Object.entries(groupedCompetencies).map(([group, comps]) => (
+                                <div key={group} className="group">
+                                    <div className="group-title">
+                                        <input
+                                            type="checkbox"
+                                            className="group-checkbox"
+                                            checked={comps.every(comp => highlighted[comp.id])}
+                                            onChange={() => toggleGroupHighlight(group)}
+                                        />
+                                        {group}
+                                    </div>
+                                    <div className="competencies">
+                                        {renderCompetencies(comps, group)}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<CompetencyMatrix />, document.getElementById('root'));
+    </script>
+</body>
+</html>
